@@ -22,13 +22,14 @@ struct Message {
 
 std::queue<Message> buffer;
 int CAPACITY = 100;
-int N = 100;
+int N = 500;
 bool done = false;
 
 void producer() {
     for (int i=0;i<N;i++) {
         {
             std::unique_lock<std::mutex> lock(mtx);
+            cv.wait(lock, []{ return buffer.size()<CAPACITY; });
             Message m = Message(i, "This is a message");
             buffer.push(m);
             std::cout<<"Pushed messsage "<<i<<" to the queue"<<std::endl;
@@ -54,6 +55,7 @@ void consumer() {
         else if (!buffer.size() && done) {
             return;
         }
+        cv.notify_one();
     }
 }
 
